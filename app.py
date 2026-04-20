@@ -24,6 +24,20 @@ def analyze():
         data = request.get_json()
         images = data.get("images", [])
         plan = data.get("plan", "express")
+        email = data.get("email")
+
+if not email:
+    return jsonify({"error": "No email"}), 400
+
+user = supabase.table("users_credits").select("*").eq("email", email).execute()
+
+if not user.data:
+    return jsonify({"error": "No account"}), 403
+
+credits = user.data[0]["credits"]
+
+if credits <= 0:
+    return jsonify({"error": "No credits left"}), 403
 
         if not images:
             return jsonify({"error": "No images sent"}), 400
@@ -118,7 +132,16 @@ Return JSON:
         result = response.json()
         answer = result["choices"][0]["message"]["content"]
 
-        return jsonify({"result": answer})
+
+
+       supabase.table("users_credits").update({
+    "credits": credits - 1
+}).eq("email", email).execute()
+
+return jsonify({
+    "result": answer,
+    "credits_left": credits - 1
+})
 
     except Exception as e:
         return jsonify({"error": str(e)})
