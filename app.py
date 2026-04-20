@@ -1,7 +1,13 @@
+from supabase import create_client
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import requests
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 CORS(app)
@@ -116,6 +122,56 @@ Return JSON:
 
     except Exception as e:
         return jsonify({"error": str(e)})
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    try:
+        data = request.json
+
+        email = data.get("email") or data.get("customer", {}).get("email")
+
+        if not email:
+            return "No email", 400
+
+        items = data.get("line_items", [])
+
+        credits_to_add = 0
+
+        for item in items:
+            title = item.get("title", "").lower()
+
+            if "express" in title:
+                credits_to_add += 1
+
+            elif "pack 5" in title:
+                credits_to_add += 5
+
+            elif "premium" in title:
+                credits_to_add += 20
+
+        if credits_to_add == 0:
+            return "No product matched", 200
+
+        existing = supabase.table("users_credits").select("*").eq("email", email).execute()
+
+        if existing.data:
+            current = existing.data[0]["credits"]
+
+            supabase.table("users_credits").update({
+                "credits": current + credits_to_add
+            }).eq("email", email).execute()
+
+        else:
+            supabase.table("users_credits").insert({
+                "email": email,
+                "credits": credits_to_add
+            }).execute()
+
+        return "OK", 200
+
+    except Exception as e:
+        return str(e), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
