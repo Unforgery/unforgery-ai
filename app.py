@@ -13,11 +13,15 @@ def home():
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
-        data = request.json
+        data = request.get_json()
         images = data.get("images", [])
 
         if not images:
-            return jsonify({"result": "No images sent"})
+            return jsonify({
+                "decision": "INCONCLUSIVE",
+                "confidence": 0,
+                "reason": "No images sent"
+            })
 
         prompt = """
 You are an elite luxury authenticator AI.
@@ -25,7 +29,7 @@ You are an elite luxury authenticator AI.
 Your mission:
 Determine if the product is likely AUTHENTIC, SUSPICIOUS, or INCONCLUSIVE.
 
-You must inspect:
+Inspect:
 - logo shape
 - stitching quality
 - serial number
@@ -40,16 +44,13 @@ You must inspect:
 Ignore:
 - wear
 - scratches
-- old condition
-- used item condition
+- used condition
 
-Compare with authentic references and identify anomalies.
-
-Return JSON:
+Return ONLY valid JSON:
 {
- "decision":"AUTHENTIC",
- "confidence":92,
- "reason":"Short explanation"
+  "decision":"AUTHENTIC",
+  "confidence":92,
+  "reason":"Short explanation"
 }
 """
 
@@ -58,7 +59,9 @@ Return JSON:
         for img in images:
             content.append({
                 "type": "image_url",
-                "image_url": {"url": img}
+                "image_url": {
+                    "url": img
+                }
             })
 
         response = requests.post(
@@ -76,10 +79,15 @@ Return JSON:
                     }
                 ],
                 "temperature": 0.2
-            }
+            },
+            timeout=60
         )
 
         result = response.json()
+
+        if "choices" not in result:
+            return jsonify({"error": result})
+
         answer = result["choices"][0]["message"]["content"]
 
         return jsonify({"result": answer})
@@ -88,4 +96,5 @@ Return JSON:
         return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
