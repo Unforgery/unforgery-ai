@@ -3,6 +3,7 @@ import os
 import requests
 
 app = Flask(__name__)
+CORS(app)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
