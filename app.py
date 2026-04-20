@@ -14,34 +14,43 @@ CORS(app)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+
 @app.route("/")
 def home():
     return "UNFORGERY AI ONLINE"
+
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
         data = request.get_json()
+
         images = data.get("images", [])
         plan = data.get("plan", "express")
         email = data.get("email")
 
-if not email:
-    return jsonify({"error": "No email"}), 400
+        # 🔥 CHECK EMAIL
+        if not email:
+            return jsonify({"error": "No email"}), 400
 
-user = supabase.table("users_credits").select("*").eq("email", email).execute()
+        # 🔥 CHECK USER
+        user = supabase.table("users_credits").select("*").eq("email", email).execute()
 
-if not user.data:
-    return jsonify({"error": "No account"}), 403
+        if not user.data:
+            return jsonify({"error": "No account"}), 403
 
-credits = user.data[0]["credits"]
+        credits = user.data[0]["credits"]
 
-if credits <= 0:
-    return jsonify({"error": "No credits left"}), 403
+        if credits <= 0:
+            return jsonify({"error": "No credits left"}), 403
 
+        # 🔥 CHECK IMAGES
         if not images:
             return jsonify({"error": "No images sent"}), 400
 
+        # ==================================================
+        # PROMPTS (INCHANGÉS)
+        # ==================================================
         if plan == "premium":
             prompt = """
 You are an elite product authenticator AI specialized in luxury and sneakers.
@@ -104,6 +113,7 @@ Return JSON:
  "decision":"Likely Authentic"
 }
 """
+        # ==================================================
 
         content = [{"type": "text", "text": prompt}]
 
@@ -132,19 +142,19 @@ Return JSON:
         result = response.json()
         answer = result["choices"][0]["message"]["content"]
 
+        # 🔥 REMOVE 1 CREDIT
+        supabase.table("users_credits").update({
+            "credits": credits - 1
+        }).eq("email", email).execute()
 
-
-       supabase.table("users_credits").update({
-    "credits": credits - 1
-}).eq("email", email).execute()
-
-return jsonify({
-    "result": answer,
-    "credits_left": credits - 1
-})
+        return jsonify({
+            "result": answer,
+            "credits_left": credits - 1
+        })
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -157,7 +167,6 @@ def webhook():
             return "No email", 400
 
         items = data.get("line_items", [])
-
         credits_to_add = 0
 
         for item in items:
