@@ -20,7 +20,7 @@ def analyze():
         plan = data.get("plan", "express")
 
         if not images:
-            return jsonify({"error": "No images sent"})
+            return jsonify({"error": "No images sent"}), 400
 
         if plan == "premium":
             prompt = """
