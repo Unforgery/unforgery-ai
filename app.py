@@ -15,42 +15,73 @@ def analyze():
     try:
         data = request.get_json()
         images = data.get("images", [])
+        plan = data.get("plan", "express")
 
         if not images:
-            return jsonify({
-                "decision": "INCONCLUSIVE",
-                "confidence": 0,
-                "reason": "No images sent"
-            })
+            return jsonify({"error": "No images sent"})
 
-        prompt = """
+        if plan == "premium":
+            prompt = """
 You are an elite luxury authenticator AI.
 
-Your mission:
-Determine if the product is likely AUTHENTIC, SUSPICIOUS, or INCONCLUSIVE.
+Analyze the uploaded item images in detail.
+
+Determine if the item is:
+- Likely Authentic
+- Suspicious
+- Likely Fake
 
 Inspect:
-- logo shape
+- logo accuracy
 - stitching quality
-- serial number
-- font
-- embossing
-- hardware engraving
-- zipper details
 - symmetry
+- materials
+- embossing
+- font
+- serial details
 - proportions
+- hardware engraving
 - known counterfeit flaws
 
-Ignore:
-- wear
-- scratches
-- used condition
+Ignore wear and used condition.
 
-Return ONLY valid JSON:
+Return JSON:
 {
-  "decision":"AUTHENTIC",
-  "confidence":92,
-  "reason":"Short explanation"
+ "decision":"Likely Authentic",
+ "confidence":92,
+ "details":{
+   "logo":"Good alignment",
+   "stitching":"Clean and consistent",
+   "shape":"Correct proportions",
+   "materials":"Consistent",
+   "red_flags":"None detected"
+ },
+ "summary":"The item appears consistent with authentic references."
+}
+"""
+        else:
+            prompt = """
+You are an elite product authenticator AI.
+
+Analyze the uploaded item images.
+
+Possible results:
+- Likely Authentic
+- Suspicious
+- Likely Fake
+
+Check:
+- logo
+- stitching
+- proportions
+- shape
+- counterfeit flaws
+
+Ignore wear and used condition.
+
+Return JSON:
+{
+ "decision":"Likely Authentic"
 }
 """
 
@@ -59,9 +90,7 @@ Return ONLY valid JSON:
         for img in images:
             content.append({
                 "type": "image_url",
-                "image_url": {
-                    "url": img
-                }
+                "image_url": {"url": img}
             })
 
         response = requests.post(
@@ -73,10 +102,7 @@ Return ONLY valid JSON:
             json={
                 "model": "gpt-4o",
                 "messages": [
-                    {
-                        "role": "user",
-                        "content": content
-                    }
+                    {"role": "user", "content": content}
                 ],
                 "temperature": 0.2
             },
@@ -84,10 +110,6 @@ Return ONLY valid JSON:
         )
 
         result = response.json()
-
-        if "choices" not in result:
-            return jsonify({"error": result})
-
         answer = result["choices"][0]["message"]["content"]
 
         return jsonify({"result": answer})
