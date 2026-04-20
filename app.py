@@ -102,7 +102,7 @@ Return JSON:
                 "messages": [
                     {"role": "user", "content": content}
                 ],
-                "temperature": 0.2
+                "temperature": 0
             },
             timeout=60
         )
