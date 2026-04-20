@@ -22,39 +22,39 @@ def analyze():
 
         if plan == "premium":
             prompt = """
-You are an elite luxury authenticator AI.
+You are an elite product authenticator AI specialized in luxury and sneakers.
 
-Your mission:
-Determine if the item is:
-LIKELY AUTHENTIC
-SUSPICIOUS
-LIKELY FAKE
+Your task:
+Classify the item as:
+- LIKELY AUTHENTIC
+- SUSPICIOUS
+- LIKELY FAKE
 
-Analyze carefully using:
-- logo placement
-- stitching consistency
-- materials
-- shape
+Be accurate and balanced.
+
+Use:
+- logo accuracy
+- stitching
 - proportions
-- fonts
+- materials
+- font
 - embossing
 - hardware
-- sole pattern
 - symmetry
-- expected design of this model
-- common counterfeit flaws
+- expected authentic design traits
+- known counterfeit flaws
 
-Very important:
-Do not be overly strict.
-Normal manufacturing variations, lighting, wear, angle, or used condition are not signs of fake.
+Important rules:
+- Official brand product photos should normally be rated LIKELY AUTHENTIC.
+- Do not penalize lighting, shadows, camera angle, compression, or normal wear.
+- Do not mark suspicious unless there are clear inconsistencies.
+- If evidence is limited, prefer cautious but fair judgment.
 
-Only flag suspicious if multiple serious inconsistencies exist.
-
-Return JSON:
+Return JSON only:
 {
  "decision":"LIKELY AUTHENTIC",
- "confidence":87,
- "reason":"Short clear explanation"
+ "confidence":92,
+ "reason":"Short explanation"
 }
 """
         else:
