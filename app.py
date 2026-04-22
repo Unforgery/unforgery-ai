@@ -34,7 +34,7 @@ def analyze():
             return jsonify({"error": "No email"}), 400
 
         # 🔥 CHECK USER
-        user = supabase.table("users_credits").select("*").eq("email", email).execute()
+        user = supabase.table("users_credits").select("*").ilike("email", email.strip()).execute()
         print("EMAIL RECU =", email)
         print("DATA =", user.data)
 
@@ -186,7 +186,7 @@ def webhook():
         if credits_to_add == 0:
             return "No product matched", 200
 
-        existing = supabase.table("users_credits").select("*").eq("email", email).execute()
+        existing = supabase.table("users_credits").select("*").ilike("email", email.strip()).execute()
 
         if existing.data:
             current = existing.data[0]["credits"]
