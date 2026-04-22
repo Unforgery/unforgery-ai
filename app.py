@@ -141,7 +141,7 @@ No extra text.
   "decision":"SUSPICIOUS",
   "confidence":82,
   "details":"Explain the strongest authentic signs, the strongest warning signs, and why this final verdict was chosen."
-}
+}}
 """
 
         content = [{"type": "text", "text": prompt}]
