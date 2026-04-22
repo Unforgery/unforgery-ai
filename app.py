@@ -7,7 +7,10 @@ import base64
 app = Flask(__name__)
 CORS(app)
 
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
+app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 15 * 1024 * 1024
+CORS(app)
+
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -206,7 +209,7 @@ RETURN ONLY VALID JSON
 
         content = [{"type": "text", "text": prompt}]
 
-        for file in files[:10]:
+        for file in files[:5]:
             img = file.read()
             encoded = base64.b64encode(img).decode("utf-8")
 
