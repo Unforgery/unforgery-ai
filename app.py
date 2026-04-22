@@ -238,7 +238,13 @@ RETURN ONLY VALID JSON
         if "choices" not in data:
             return jsonify({"result": str(data)}), 500
 
-        answer = data["choices"][0]["message"]["content"]
+        answer = data["choices"][0]["message"]["content"].strip()
+
+start = answer.find("{")
+end = answer.rfind("}") + 1
+
+if start != -1 and end != -1:
+    answer = answer[start:end]
 
         return jsonify({"result": answer})
 
