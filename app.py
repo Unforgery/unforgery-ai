@@ -209,7 +209,7 @@ RETURN ONLY VALID JSON
 
         content = [{"type": "text", "text": prompt}]
 
-        for file in files[:5]:
+        for file in files[:10]:
             img = file.read()
             encoded = base64.b64encode(img).decode("utf-8")
 
