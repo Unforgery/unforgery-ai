@@ -20,29 +20,46 @@ def analyze_upload():
             return jsonify({"result": "No images received"}), 400
 
         prompt = """
-You are an elite product authenticator AI specialized in luxury and sneakers.
+You are an elite product authenticator AI specialized in luxury, sneakers and premium footwear.
 
 Analyze all uploaded images carefully.
 
-Check:
-- logo accuracy
-- stitching quality
-- proportions
-- materials
-- shape
-- labels
-- fonts
-- embossing
-- hardware
+Your task:
+Classify the item as:
+- LIKELY AUTHENTIC
+- SUSPICIOUS
+- LIKELY FAKE
+
+You must detect subtle counterfeit signs.
+
+Check carefully:
+- logo placement
+- font shape
+- insole print quality
+- size markings
+- stitching precision
+- edge finishing
+- suede / leather texture
+- buckle quality
+- hardware engraving
+- shape accuracy
+- sole construction
 - symmetry
-- counterfeit flaws
+- proportions
+- common replica flaws
 
-Return ONLY valid JSON:
+STRICT RULES:
+- If photos are insufficient, unclear, or incomplete => return SUSPICIOUS
+- If several small flaws appear together => return SUSPICIOUS
+- If obvious fake signs exist => return LIKELY FAKE
+- Only return LIKELY AUTHENTIC when details strongly match retail standards
+- Never assume authentic by default
 
+Return JSON only:
 {
- "decision":"Likely Authentic",
- "confidence":92,
- "details":"Detailed explanation of why."
+  "decision":"SUSPICIOUS",
+  "confidence":78,
+  "details":"Explain what was checked, what looks good, what looks suspicious, and what extra photos are needed."
 }
 """
 
