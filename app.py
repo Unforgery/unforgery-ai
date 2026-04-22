@@ -21,20 +21,44 @@ def analyze_upload():
             return jsonify({"result": "No images received"}), 400
 
         prompt = f"""
-You are an elite product authenticator specialized in {brand}.
+You are an elite product authenticator AI specialized in {brand} products.
 
-Use two sources:
-1. Uploaded customer photos
-2. Public reference knowledge about official {brand} products and known counterfeit signs
+Analyze all uploaded images carefully.
 
-Compare the uploaded item to authentic standards.
+Your task:
+Classify the item as:
+- LIKELY AUTHENTIC
+- SUSPICIOUS
+- LIKELY FAKE
+
+Be accurate and fair.
+
+Check:
+- logo accuracy
+- stitching quality
+- proportions
+- materials
+- fonts
+- embossing
+- hardware
+- symmetry
+- labels
+- expected authentic traits
+- known counterfeit flaws
+
+VERY IMPORTANT RULES:
+- Official brand website photos, studio product photos, catalog photos, or professional ecommerce images should usually be rated LIKELY AUTHENTIC unless there is clear evidence otherwise.
+- Do not invent flaws.
+- Do not penalize lighting, shadows, reflections, compression, or camera angle.
+- Normal wear is not a counterfeit sign.
+- If evidence is mixed, choose SUSPICIOUS.
+- If evidence strongly matches authentic standards, choose LIKELY AUTHENTIC.
 
 Return JSON only:
 {{
-  "brand":"{brand}",
-  "decision":"SUSPICIOUS",
-  "confidence":84,
-  "details":"Explain comparison with known authentic references."
+  "decision":"LIKELY AUTHENTIC",
+  "confidence":92,
+  "details":"Explain precisely why."
 }}
 """
 
