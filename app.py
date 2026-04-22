@@ -6,13 +6,12 @@ import requests
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__)
 CORS(app)
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 @app.route("/")
@@ -23,30 +22,34 @@ def home():
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
-        data = request.get_json()
+        data = request.get_json(force=True)
 
         images = data.get("images", [])
         plan = data.get("plan", "express")
-        email = data.get("email")
+        email = data.get("email", "").strip().lower()
 
-        # 🔥 CHECK EMAIL
+        # CHECK EMAIL
         if not email:
             return jsonify({"error": "No email"}), 400
 
-        # 🔥 CHECK USER
-        user = supabase.table("users_credits").select("*").ilike("email", email.strip()).execute()
-        print("EMAIL RECU =", email)
-        print("DATA =", user.data)
+        # CHECK USER
+        user = (
+            supabase
+            .table("users_credits")
+            .select("*")
+            .ilike("email", email)
+            .execute()
+        )
 
         if not user.data:
             return jsonify({"error": "No account"}), 403
 
-        credits = user.data[0]["credits"]
+        credits = int(user.data[0]["credits"])
 
         if credits <= 0:
             return jsonify({"error": "No credits left"}), 403
 
-        # 🔥 CHECK IMAGES
+        # CHECK IMAGES
         if not images:
             return jsonify({"error": "No images sent"}), 400
 
@@ -142,12 +145,20 @@ Return JSON:
         )
 
         result = response.json()
+
+        if "choices" not in result:
+            return jsonify({"error": result}), 500
+
         answer = result["choices"][0]["message"]["content"]
 
-        # 🔥 REMOVE 1 CREDIT
-        supabase.table("users_credits").update({
-            "credits": credits - 1
-        }).eq("email", email).execute()
+        # REMOVE 1 CREDIT
+        (
+            supabase
+            .table("users_credits")
+            .update({"credits": credits - 1})
+            .eq("email", user.data[0]["email"])
+            .execute()
+        )
 
         return jsonify({
             "result": answer,
@@ -161,9 +172,13 @@ Return JSON:
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
-        data = request.json
+        data = request.get_json(force=True)
 
-        email = data.get("email") or data.get("customer", {}).get("email")
+        email = (
+            data.get("email")
+            or data.get("customer", {}).get("email")
+            or ""
+        ).strip().lower()
 
         if not email:
             return "No email", 400
@@ -176,30 +191,42 @@ def webhook():
 
             if "express" in title:
                 credits_to_add += 1
-
             elif "pack 5" in title:
                 credits_to_add += 5
-
             elif "premium" in title:
                 credits_to_add += 20
 
         if credits_to_add == 0:
             return "No product matched", 200
 
-        existing = supabase.table("users_credits").select("*").ilike("email", email.strip()).execute()
+        existing = (
+            supabase
+            .table("users_credits")
+            .select("*")
+            .ilike("email", email)
+            .execute()
+        )
 
         if existing.data:
-            current = existing.data[0]["credits"]
+            current = int(existing.data[0]["credits"])
 
-            supabase.table("users_credits").update({
-                "credits": current + credits_to_add
-            }).eq("email", email).execute()
-
+            (
+                supabase
+                .table("users_credits")
+                .update({"credits": current + credits_to_add})
+                .eq("email", existing.data[0]["email"])
+                .execute()
+            )
         else:
-            supabase.table("users_credits").insert({
-                "email": email,
-                "credits": credits_to_add
-            }).execute()
+            (
+                supabase
+                .table("users_credits")
+                .insert({
+                    "email": email,
+                    "credits": credits_to_add
+                })
+                .execute()
+            )
 
         return "OK", 200
 
