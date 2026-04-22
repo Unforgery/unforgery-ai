@@ -14,6 +14,7 @@ def home():
 @app.route("/analyze-upload", methods=["POST"])
 def analyze_upload():
     try:
+        brand = request.form.get("brand", "").strip()
         files = request.files.getlist("files")
 
         if not files:
