@@ -24,7 +24,9 @@ def home():
 def analyze_upload():
     try:
         brand = request.form.get("brand", "").strip()
+        brand_lower = brand.lower()
 
+        files = request.files.getlist("files")
         if not brand:
             brand = "general"
 
