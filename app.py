@@ -93,31 +93,7 @@ Return JSON only:
  "reason":"Short explanation"
 }
 """
-        else:
-            prompt = """
-You are an elite product authenticator AI.
-
-Analyze the uploaded item images.
-
-Possible results:
-- Likely Authentic
-- Suspicious
-- Likely Fake
-
-Check:
-- logo
-- stitching
-- proportions
-- shape
-- counterfeit flaws
-
-Ignore wear and used condition.
-
-Return JSON:
-{
- "decision":"Likely Authentic"
-}
-"""
+        
         # ==================================================
 
         content = [{"type": "text", "text": prompt}]
