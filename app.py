@@ -19,48 +19,31 @@ def analyze_upload():
         if not files:
             return jsonify({"result": "No images received"}), 400
 
-        prompt = """
-You are an elite product authenticator AI specialized in luxury, sneakers and premium footwear.
+        prompt = f"""
+You are an elite AI authenticator specialized in {brand} products.
 
 Analyze all uploaded images carefully.
 
-Your task:
+Apply authentication rules specific to {brand}.
+
 Classify the item as:
 - LIKELY AUTHENTIC
 - SUSPICIOUS
 - LIKELY FAKE
 
-You must detect subtle counterfeit signs.
-
-Check carefully:
-- logo placement
-- font shape
-- insole print quality
-- size markings
-- stitching precision
-- edge finishing
-- suede / leather texture
-- buckle quality
-- hardware engraving
-- shape accuracy
-- sole construction
-- symmetry
-- proportions
-- common replica flaws
-
 STRICT RULES:
-- If photos are insufficient, unclear, or incomplete => return SUSPICIOUS
-- If several small flaws appear together => return SUSPICIOUS
-- If obvious fake signs exist => return LIKELY FAKE
-- Only return LIKELY AUTHENTIC when details strongly match retail standards
-- Never assume authentic by default
+- If photos incomplete => SUSPICIOUS
+- If multiple flaws => SUSPICIOUS
+- If clear fake signs => LIKELY FAKE
+- Only return authentic if strong evidence
 
 Return JSON only:
-{
+{{
+  "brand":"{brand}",
   "decision":"SUSPICIOUS",
-  "confidence":78,
-  "details":"Explain what was checked, what looks good, what looks suspicious, and what extra photos are needed."
-}
+  "confidence":84,
+  "details":"Detailed explanation of checks performed."
+}}
 """
 
         content = [{"type": "text", "text": prompt}]
