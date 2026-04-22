@@ -1,20 +1,28 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os, requests, base64
+import os
+import requests
+import base64
 
 app = Flask(__name__)
 CORS(app)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+
 @app.route("/")
 def home():
     return "UNFORGERY AI ONLINE"
+
 
 @app.route("/analyze-upload", methods=["POST"])
 def analyze_upload():
     try:
         brand = request.form.get("brand", "").strip()
+
+        if not brand:
+            brand = "general"
+
         files = request.files.getlist("files")
 
         if not files:
@@ -31,124 +39,87 @@ You must classify the item as one of these:
 - SUSPICIOUS
 - LIKELY FAKE
 
-==================================================
-CORE ANALYSIS FRAMEWORK
-==================================================
+Analyze all uploaded photos together.
 
-Examine all uploaded images carefully and compare visual consistency across every photo.
-
-Analyze:
-
+Check carefully:
 1. Branding
 - logo shape
-- logo placement
-- logo proportions
+- placement
+- proportions
 - spelling
-- font accuracy
-- engraving quality
-- embossing precision
+- font
+- engraving
+- embossing
 
 2. Construction Quality
 - stitching alignment
-- stitch density
 - symmetry
 - edge finishing
 - glue marks
-- craftsmanship level
+- craftsmanship
 
 3. Materials
-- leather / fabric texture
+- leather / fabric quality
+- suede texture
 - canvas grain
-- suede quality
-- shine / matte balance
 - hardware finish
-- weight impression
-- overall premium feel
+- premium feel
 
 4. Shape & Structure
 - silhouette
 - proportions
 - panel alignment
-- sole shape
-- handle shape
 - dimensions consistency
 
 5. Hardware & Details
 - zipper quality
-- screws
 - buckles
 - chains
 - clasps
-- metal color
+- screws
 - engravings
-- serial plates
 
 6. Labels / Codes / Interior
 - tags
-- date codes
 - serial numbers
 - insole prints
-- lining quality
+- lining
 - inside stamps
 
-7. Counterfeit Detection
-Look for known fake indicators:
+7. Counterfeit Indicators
 - wrong fonts
 - poor spacing
-- uneven stitching
 - cheap materials
-- weak embossing
+- uneven stitching
 - inaccurate shape
+- weak embossing
 - inconsistent details
-- low quality hardware
-- branding errors
-- mismatch between photos
 
-==================================================
-IMPORTANT DECISION RULES
-==================================================
-
-- Never assume authentic just because photos look professional.
-- Never assume fake without real visible evidence.
-- Do not invent flaws.
-- Ignore lighting, shadows, blur, compression, reflections, and normal wear.
+Important rules:
+- Never assume authentic only because photos look professional.
+- Never assume fake without visible evidence.
+- Ignore lighting, shadows, blur, reflections, compression, and normal wear.
 - If evidence is limited, lower confidence.
-- If several strong red flags appear, classify as LIKELY FAKE.
-- If item looks mostly correct but some concerns remain, classify as SUSPICIOUS.
-- If details strongly match authentic standards with no meaningful red flags, classify as LIKELY AUTHENTIC.
-- Be conservative with expensive luxury items.
-- Use all photos together, not only one image.
-
-==================================================
-CONFIDENCE SCALE
-==================================================
-
-90-100 = Very strong evidence
-75-89  = Strong probability
-60-74  = Moderate confidence
-40-59  = Uncertain / mixed evidence
-0-39   = Strong counterfeit indicators
-
-==================================================
-OUTPUT RULES
-==================================================
+- If strong red flags appear = LIKELY FAKE.
+- If mixed evidence = SUSPICIOUS.
+- If strong consistency and no red flags = LIKELY AUTHENTIC.
 
 Return ONLY valid JSON.
 No markdown.
 No extra text.
 
-{
-  "decision":"SUSPICIOUS",
-  "confidence":82,
-  "details":"Explain the strongest authentic signs, the strongest warning signs, and why this final verdict was chosen."
+{{
+  "decision": "LIKELY AUTHENTIC",
+  "confidence": 91,
+  "details": "Short but professional explanation of authentic signs, warning signs if any, and final reasoning."
 }}
 """
 
         content = [{"type": "text", "text": prompt}]
 
         for file in files[:20]:
-            img = file.read()
-            encoded = base64.b64encode(img).decode("utf-8")
+            img_bytes = file.read()
+            encoded = base64.b64encode(img_bytes).decode("utf-8")
 
             content.append({
                 "type": "image_url",
@@ -166,7 +137,10 @@ No extra text.
             json={
                 "model": "gpt-4o",
                 "messages": [
-                    {"role": "user", "content": content}
+                    {
+                        "role": "user",
+                        "content": content
+                    }
                 ],
                 "temperature": 0
             },
@@ -184,6 +158,7 @@ No extra text.
 
     except Exception as e:
         return jsonify({"result": str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
