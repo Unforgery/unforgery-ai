@@ -29,89 +29,112 @@ def analyze_upload():
             return jsonify({"result": "No images received"}), 400
 
         prompt = f"""
-You are a world-class AI product authenticator specialized in {brand} products, including luxury goods, sneakers, accessories, bags, watches, and fashion items.
+You are a world-class authentication expert specialized ONLY in {brand} products.
+
+You know authentic manufacturing standards, common counterfeit flaws, logos, fonts, materials, shape, labels, hardware, and construction details of {brand}.
 
 Your mission:
-Deliver the most accurate, fair, and professional authenticity assessment possible using only the uploaded images.
+Give the most professional and cautious authenticity verdict possible from the uploaded images.
 
-You must classify the item as one of these:
+Possible decisions:
 - LIKELY AUTHENTIC
 - SUSPICIOUS
 - LIKELY FAKE
 
-Analyze all uploaded photos together.
+==================================================
+STEP 1 — CHECK IMAGE SUFFICIENCY
+==================================================
 
-Check carefully:
+First determine if there is enough visual evidence.
+
+Minimum useful evidence includes several of these:
+- front view
+- side view
+- back view
+- logo close-up
+- stitching close-up
+- label / size tag
+- sole / outsole
+- interior / insole
+- hardware close-up
+- serial code / date code (if relevant)
+
+If images are too few, too blurry, too distant, missing key angles, or missing critical details:
+
+You MUST return:
+- decision = SUSPICIOUS
+- lower confidence
+- explain that more photos are required
+
+Never return LIKELY AUTHENTIC with weak evidence.
+
+==================================================
+STEP 2 — BRAND EXPERT ANALYSIS
+==================================================
+
+Analyze according to {brand} standards:
+
 1. Branding
-- logo shape
-- placement
-- proportions
-- spelling
+- logo accuracy
 - font
-- engraving
+- spacing
+- placement
 - embossing
+- engraving
 
-2. Construction Quality
-- stitching alignment
+2. Construction
+- stitching quality
 - symmetry
-- edge finishing
-- glue marks
 - craftsmanship
+- finishing
 
 3. Materials
-- leather / fabric quality
-- suede texture
-- canvas grain
-- hardware finish
+- leather / suede / fabric quality
+- texture
+- hardware quality
 - premium feel
 
-4. Shape & Structure
+4. Shape
 - silhouette
 - proportions
-- panel alignment
+- structure
 - dimensions consistency
 
-5. Hardware & Details
-- zipper quality
+5. Details
+- labels
+- serial codes
+- insoles
+- lining
+- zippers
 - buckles
 - chains
-- clasps
-- screws
-- engravings
+- outsole pattern
 
-6. Labels / Codes / Interior
-- tags
-- serial numbers
-- insole prints
-- lining
-- inside stamps
-
-7. Counterfeit Indicators
-- wrong fonts
-- poor spacing
+6. Counterfeit Detection
+- wrong font
 - cheap materials
-- uneven stitching
-- inaccurate shape
+- poor stitching
+- bad proportions
 - weak embossing
+- incorrect shape
 - inconsistent details
 
-Important rules:
-- Never assume authentic only because photos look professional.
-- Never assume fake without visible evidence.
-- Ignore lighting, shadows, blur, reflections, compression, and normal wear.
-- If evidence is limited, lower confidence.
-- If strong red flags appear = LIKELY FAKE.
-- If mixed evidence = SUSPICIOUS.
-- If strong consistency and no red flags = LIKELY AUTHENTIC.
+==================================================
+DECISION RULES
+==================================================
 
-Return ONLY valid JSON.
-No markdown.
-No extra text.
+- Strong consistency + enough evidence = LIKELY AUTHENTIC
+- Mixed signs OR insufficient photos = SUSPICIOUS
+- Clear fake indicators = LIKELY FAKE
+
+Be strict, fair, and professional.
+
+Return ONLY valid JSON:
 
 {{
-  "decision": "LIKELY AUTHENTIC",
-  "confidence": 91,
-  "details": "Short but professional explanation of authentic signs, warning signs if any, and final reasoning."
+  "decision":"SUSPICIOUS",
+  "confidence":63,
+  "details":"Explain strongest positive signs, warning signs, and if more photos are needed."
 }}
 """
 
