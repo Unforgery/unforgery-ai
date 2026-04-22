@@ -24,25 +24,36 @@ You are an elite AI authenticator specialized in {brand} products.
 
 Analyze all uploaded images carefully.
 
-Apply authentication rules specific to {brand}.
-
+Your task:
 Classify the item as:
 - LIKELY AUTHENTIC
 - SUSPICIOUS
 - LIKELY FAKE
 
-STRICT RULES:
-- If photos incomplete => SUSPICIOUS
-- If multiple flaws => SUSPICIOUS
-- If clear fake signs => LIKELY FAKE
-- Only return authentic if strong evidence
+Check:
+- logo accuracy
+- stitching
+- proportions
+- materials
+- fonts
+- hardware
+- symmetry
+- finishing quality
+- known counterfeit flaws
+
+BALANCED RULES:
+- Official brand product photos or highly consistent retail-quality images should usually be LIKELY AUTHENTIC
+- If details strongly match authentic standards and no red flags appear => LIKELY AUTHENTIC
+- If evidence is mixed, limited, or uncertain => SUSPICIOUS
+- If multiple flaws or major inconsistencies appear => LIKELY FAKE
+- Do not penalize studio lighting, clean backgrounds, compression, or normal wear
 
 Return JSON only:
 {{
   "brand":"{brand}",
-  "decision":"SUSPICIOUS",
-  "confidence":84,
-  "details":"Detailed explanation of checks performed."
+  "decision":"LIKELY AUTHENTIC",
+  "confidence":91,
+  "details":"Explain what was checked, what looks correct, what looks suspicious if any, and why."
 }}
 """
 
