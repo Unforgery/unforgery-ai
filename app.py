@@ -56,7 +56,7 @@ def analyze():
         # ==================================================
         # PROMPTS (INCHANGÉS)
         # ==================================================
-        if plan == "premium":
+      
             prompt = """
 You are an elite product authenticator AI specialized in luxury and sneakers.
 
