@@ -57,7 +57,7 @@ def analyze():
         # PROMPTS (INCHANGÉS)
         # ==================================================
       
-            prompt = """
+           prompt = """
 You are an elite product authenticator AI specialized in luxury and sneakers.
 
 Analyze all uploaded images carefully.
@@ -68,7 +68,7 @@ Classify the item as:
 - SUSPICIOUS
 - LIKELY FAKE
 
-Be accurate and balanced.
+Be accurate, strict, and balanced.
 
 Use:
 - logo accuracy
@@ -90,11 +90,13 @@ Important rules:
 - Do not mark suspicious unless there are clear inconsistencies.
 - If evidence is limited, prefer cautious but fair judgment.
 
-Return JSON only:
+Return ONLY valid JSON:
+
 {
  "decision":"LIKELY AUTHENTIC",
  "confidence":92,
- "reason":"Short explanation"
+ "reason":"Short final verdict",
+ "details":"Detailed explanation of what was checked: logo, stitching, materials, shape, labels, fonts, hardware, flaws, and why the item looks authentic or suspicious."
 }
 """
         
