@@ -21,14 +21,17 @@ def home():
 @app.route("/analyze-upload", methods=["POST"])
 def analyze_upload():
     try:
-        brand = request.form.get("brand", "").strip()
+        # Vérifie clé API
+        if not OPENAI_API_KEY:
+            return jsonify({"result": "OPENAI_API_KEY missing"}), 500
 
+        brand = request.form.get("brand", "").strip()
         if not brand:
             brand = "general product"
 
         files = request.files.getlist("files")
 
-        if not files:
+        if not files or len(files) == 0:
             return jsonify({"result": "No images received"}), 400
 
         prompt = f"""
@@ -207,16 +210,29 @@ RETURN ONLY VALID JSON
 
         content = [{"type": "text", "text": prompt}]
 
+        # Max 10 images
         for file in files[:10]:
-            img = file.read()
-            encoded = base64.b64encode(img).decode("utf-8")
+            try:
+                img = file.read()
 
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/jpeg;base64,{encoded}"
-                }
-            })
+                if not img:
+                    continue
+
+                encoded = base64.b64encode(img).decode("utf-8")
+
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{encoded}"
+                    }
+                })
+
+            except Exception:
+                continue
+
+        # Si aucune image valide
+        if len(content) == 1:
+            return jsonify({"result": "Invalid images"}), 400
 
         response = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -234,6 +250,12 @@ RETURN ONLY VALID JSON
             timeout=120
         )
 
+        # Vérifie erreur API OpenAI
+        if response.status_code != 200:
+            return jsonify({
+                "result": f"OpenAI Error {response.status_code}: {response.text}"
+            }), 500
+
         data = response.json()
 
         if "choices" not in data:
@@ -241,20 +263,26 @@ RETURN ONLY VALID JSON
 
         answer = data["choices"][0]["message"]["content"].strip()
 
+        # Nettoyage markdown
         answer = answer.replace("```json", "").replace("```", "").strip()
 
+        # Extraction JSON
         match = re.search(r"\{.*\}", answer, re.DOTALL)
         if match:
             answer = match.group(0)
 
+        # JSON clean
         try:
             parsed = json.loads(answer)
             return jsonify({"result": json.dumps(parsed)})
-        except:
+        except Exception:
             return jsonify({"result": answer})
 
+    except requests.exceptions.Timeout:
+        return jsonify({"result": "Request timeout"}), 500
+
     except Exception as e:
-        return jsonify({"result": str(e)}), 500
+        return jsonify({"result": f"Server error: {str(e)}"}), 500
 
 
 if __name__ == "__main__":
