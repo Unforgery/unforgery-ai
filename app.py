@@ -35,6 +35,8 @@ def analyze():
 
         # 🔥 CHECK USER
         user = supabase.table("users_credits").select("*").eq("email", email).execute()
+        print("EMAIL RECU =", email)
+        print("DATA =", user.data)
 
         if not user.data:
             return jsonify({"error": "No account"}), 403
