@@ -34,7 +34,7 @@ def analyze():
             return jsonify({"error": "No email"}), 400
 
         # 🔥 CHECK USER
-        user = supabase.table("users_credits").select("*").ilike("email", email.strip())
+        user = supabase.table("users_credits").select("*").eq("email", email).execute()
         print("EMAIL RECU =", email)
         print("DATA =", user.data)
 
