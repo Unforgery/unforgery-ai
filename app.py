@@ -60,6 +60,8 @@ def analyze():
             prompt = """
 You are an elite product authenticator AI specialized in luxury and sneakers.
 
+Analyze all uploaded images carefully.
+
 Your task:
 Classify the item as:
 - LIKELY AUTHENTIC
@@ -70,10 +72,12 @@ Be accurate and balanced.
 
 Use:
 - logo accuracy
-- stitching
+- stitching quality
 - proportions
 - materials
-- font
+- shape
+- labels
+- fonts
 - embossing
 - hardware
 - symmetry
