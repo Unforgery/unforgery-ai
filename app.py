@@ -233,7 +233,75 @@ def webhook():
     except Exception as e:
         return str(e), 500
 
+import base64
 
+@app.route("/analyze-upload", methods=["POST"])
+def analyze_upload():
+    try:
+        files = request.files.getlist("files")
+
+        if not files:
+            return jsonify({"result": "No images received"}), 400
+
+        content = [{
+            "type": "text",
+            "text": """
+You are an elite product authenticator AI.
+
+Analyze these item photos.
+
+Possible results:
+- Likely Authentic
+- Suspicious
+- Likely Fake
+
+Return only:
+{
+ "decision":"Likely Authentic"
+}
+"""
+        }]
+
+        for file in files[:20]:
+            img_bytes = file.read()
+            encoded = base64.b64encode(img_bytes).decode("utf-8")
+
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{encoded}"
+                }
+            })
+
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4o",
+                "messages": [
+                    {"role": "user", "content": content}
+                ],
+                "temperature": 0
+            },
+            timeout=120
+        )
+
+        result = response.json()
+
+        if "choices" not in result:
+            return jsonify({"result": str(result)}), 500
+
+        answer = result["choices"][0]["message"]["content"]
+
+        return jsonify({
+            "result": answer
+        })
+
+    except Exception as e:
+        return jsonify({"result": str(e)}), 500
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
