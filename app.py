@@ -28,7 +28,13 @@ def sb_headers():
 
 
 def get_user(email):
-    def update_or_create_user(email, add_credits, new_plan):
+    url = f"{SUPABASE_URL}/rest/v1/users_credits?email=eq.{email}&select=*"
+    r = requests.get(url, headers=sb_headers(), timeout=20)
+    data = r.json()
+    return data[0] if data else None
+
+
+def update_or_create_user(email, add_credits, new_plan):
     user = get_user(email)
 
     if user:
@@ -62,64 +68,10 @@ def get_user(email):
             timeout=20
         )
 
-@app.route("/get-credits", methods=["GET"])
-def get_credits():
-    email = request.args.get("email")
-
-    if not email:
-        return jsonify({"credits": 0})
-
-    user = get_user(email)
-
-    if not user:
-        return jsonify({"credits": 0})
-
-    return jsonify({
-        "credits": int(user.get("credits", 0))
-    })
-@app.route("/shopify-webhook", methods=["POST"])
-def shopify_webhook():
-    try:
-        order = request.json
-        email = order.get("email") or order.get("customer", {}).get("email")
-
-        if not email:
-            return "No email", 400
-
-        add_credits = 0
-        new_plan = "Express"
-
-        for item in order.get("line_items", []):
-            title = item.get("title", "").lower()
-
-            if "premium 20" in title:
-                add_credits += 20
-                new_plan = "Premium"
-
-            elif "pack 5" in title:
-                add_credits += 5
-                new_plan = "Basic"
-
-            elif "express" in title:
-                add_credits += 1
-                new_plan = "Express"
-
-        update_or_create_user(email, add_credits, new_plan)
-
-        return "OK", 200
-
-    except Exception as e:
-        print("WEBHOOK ERROR:", e)
-        return "Error", 500
-    url = f"{SUPABASE_URL}/rest/v1/users_credits?email=eq.{email}&select=*"
-    r = requests.get(url, headers=sb_headers(), timeout=20)
-    data = r.json()
-    return data[0] if data else None
-
 
 def get_credits(email):
     user = get_user(email)
-    return user["credits"] if user else 0
+    return int(user["credits"]) if user else 0
 
 
 def add_credits(email, amount):
@@ -183,35 +135,39 @@ def home():
 
 
 # ==================================================
-# SHOPIFY WEBHOOK (AJOUT CREDITS APRES PAIEMENT)
+# SHOPIFY WEBHOOK
 # ==================================================
 
 @app.route("/shopify-webhook", methods=["POST"])
 def shopify_webhook():
     try:
         data = request.json
-        email = data.get("email", "").strip().lower()
+        email = (data.get("email") or "").strip().lower()
 
         if not email:
             return jsonify({"status": "no email"}), 400
 
         total = 0
+        new_plan = "Express"
 
         for item in data.get("line_items", []):
             title = item.get("title", "").lower()
             qty = int(item.get("quantity", 1))
 
-            if "express authentication scan" in title:
-                total += 1 * qty
-
-            elif "pack 5 authentication scans" in title:
-                total += 5 * qty
-
-            elif "premium authentication scan" in title:
+            if "premium 20" in title:
                 total += 20 * qty
+                new_plan = "Premium"
+
+            elif "pack 5" in title:
+                total += 5 * qty
+                new_plan = "Basic"
+
+            elif "express" in title:
+                total += 1 * qty
+                new_plan = "Express"
 
         if total > 0:
-            add_credits(email, total)
+            update_or_create_user(email, total, new_plan)
 
         return jsonify({
             "status": "success",
@@ -224,22 +180,32 @@ def shopify_webhook():
 
 
 # ==================================================
-# GET CREDITS
+# GET CREDITS ROUTE
 # ==================================================
 
-@app.route("/get-credits", methods=["POST"])
-def get_user_credits():
+@app.route("/get-credits", methods=["GET"])
+def get_credits_route():
     try:
-        data = request.json
-        email = data.get("email", "").strip().lower()
+        email = request.args.get("email", "").strip().lower()
+
+        if not email:
+            return jsonify({"credits": 0, "plan": "No Plan"})
+
+        user = get_user(email)
+
+        if not user:
+            return jsonify({"credits": 0, "plan": "No Plan"})
 
         return jsonify({
-            "email": email,
-            "credits": get_credits(email)
+            "credits": int(user.get("credits", 0)),
+            "plan": user.get("plan", "Unknown")
         })
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        return jsonify({
+            "credits": 0,
+            "plan": "Error"
+        })
 
 
 # ==================================================
@@ -249,7 +215,6 @@ def get_user_credits():
 @app.route("/analyze-upload", methods=["POST"])
 def analyze_upload():
     try:
-        # Vérifie clé API
         if not OPENAI_API_KEY:
             return jsonify({"result": "OPENAI_API_KEY missing"}), 500
 
@@ -258,7 +223,6 @@ def analyze_upload():
         if not email:
             return jsonify({"result": "Email required"}), 400
 
-        # Vérifie crédits
         if get_credits(email) <= 0:
             return jsonify({"result": "No credits remaining"}), 403
 
@@ -447,7 +411,6 @@ RETURN ONLY VALID JSON
 
         content = [{"type": "text", "text": prompt}]
 
-        # Max 10 images
         for file in files[:10]:
             try:
                 img = file.read()
@@ -467,7 +430,6 @@ RETURN ONLY VALID JSON
             except Exception:
                 continue
 
-        # Si aucune image valide
         if len(content) == 1:
             return jsonify({"result": "Invalid images"}), 400
 
@@ -487,7 +449,6 @@ RETURN ONLY VALID JSON
             timeout=120
         )
 
-        # Vérifie erreur API OpenAI
         if response.status_code != 200:
             return jsonify({
                 "result": f"OpenAI Error {response.status_code}: {response.text}"
@@ -499,19 +460,14 @@ RETURN ONLY VALID JSON
             return jsonify({"result": str(data)}), 500
 
         answer = data["choices"][0]["message"]["content"].strip()
-
-        # Nettoyage markdown
         answer = answer.replace("```json", "").replace("```", "").strip()
 
-        # Extraction JSON
         match = re.search(r"\{.*\}", answer, re.DOTALL)
         if match:
             answer = match.group(0)
 
-        # Retire 1 crédit seulement si scan OK
         remove_credit(email)
 
-        # JSON clean
         try:
             parsed = json.loads(answer)
             return jsonify({"result": json.dumps(parsed)})
@@ -532,38 +488,3 @@ RETURN ONLY VALID JSON
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
-
-
-@app.route("/get-credits", methods=["GET"])
-def get_credits():
-    try:
-        email = request.args.get("email", "").strip().lower()
-
-        if not email:
-            return jsonify({"credits": 0, "plan": "No Plan"})
-
-        headers = {
-            "apikey": SUPABASE_SERVICE_ROLE_KEY,
-            "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"
-        }
-
-        url = f"{SUPABASE_URL}/rest/v1/users_credits?email=eq.{email}&select=*"
-
-        r = requests.get(url, headers=headers)
-        data = r.json()
-
-        if not data:
-            return jsonify({"credits": 0, "plan": "No Plan"})
-
-        user = data[0]
-
-        return jsonify({
-            "credits": user.get("credits", 0),
-            "plan": user.get("plan", "Unknown")
-        })
-
-    except Exception as e:
-        return jsonify({
-            "credits": 0,
-            "plan": "Error"
-        })
