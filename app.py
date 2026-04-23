@@ -449,3 +449,38 @@ RETURN ONLY VALID JSON
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
+
+@app.route("/get-credits", methods=["GET"])
+def get_credits():
+    try:
+        email = request.args.get("email", "").strip().lower()
+
+        if not email:
+            return jsonify({"credits": 0, "plan": "No Plan"})
+
+        headers = {
+            "apikey": SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"
+        }
+
+        url = f"{SUPABASE_URL}/rest/v1/users_credits?email=eq.{email}&select=*"
+
+        r = requests.get(url, headers=headers)
+        data = r.json()
+
+        if not data:
+            return jsonify({"credits": 0, "plan": "No Plan"})
+
+        user = data[0]
+
+        return jsonify({
+            "credits": user.get("credits", 0),
+            "plan": user.get("plan", "Unknown")
+        })
+
+    except Exception as e:
+        return jsonify({
+            "credits": 0,
+            "plan": "Error"
+        })
