@@ -28,6 +28,75 @@ def sb_headers():
 
 
 def get_user(email):
+    def update_or_create_user(email, add_credits, new_plan):
+    user = get_user(email)
+
+    if user:
+        total = int(user.get("credits", 0)) + add_credits
+
+        url = f"{SUPABASE_URL}/rest/v1/users_credits?email=eq.{email}"
+        payload = {
+            "credits": total,
+            "plan": new_plan
+        }
+
+        requests.patch(
+            url,
+            headers=sb_headers(),
+            data=json.dumps(payload),
+            timeout=20
+        )
+
+    else:
+        url = f"{SUPABASE_URL}/rest/v1/users_credits"
+        payload = {
+            "email": email,
+            "credits": add_credits,
+            "plan": new_plan
+        }
+
+        requests.post(
+            url,
+            headers=sb_headers(),
+            data=json.dumps(payload),
+            timeout=20
+        )
+
+
+@app.route("/shopify-webhook", methods=["POST"])
+def shopify_webhook():
+    try:
+        order = request.json
+        email = order.get("email") or order.get("customer", {}).get("email")
+
+        if not email:
+            return "No email", 400
+
+        add_credits = 0
+        new_plan = "Express"
+
+        for item in order.get("line_items", []):
+            title = item.get("title", "").lower()
+
+            if "premium 20" in title:
+                add_credits += 20
+                new_plan = "Premium"
+
+            elif "pack 5" in title:
+                add_credits += 5
+                new_plan = "Basic"
+
+            elif "express" in title:
+                add_credits += 1
+                new_plan = "Express"
+
+        update_or_create_user(email, add_credits, new_plan)
+
+        return "OK", 200
+
+    except Exception as e:
+        print("WEBHOOK ERROR:", e)
+        return "Error", 500
     url = f"{SUPABASE_URL}/rest/v1/users_credits?email=eq.{email}&select=*"
     r = requests.get(url, headers=sb_headers(), timeout=20)
     data = r.json()
