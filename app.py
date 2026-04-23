@@ -62,7 +62,21 @@ def get_user(email):
             timeout=20
         )
 
+@app.route("/get-credits", methods=["GET"])
+def get_credits():
+    email = request.args.get("email")
 
+    if not email:
+        return jsonify({"credits": 0})
+
+    user = get_user(email)
+
+    if not user:
+        return jsonify({"credits": 0})
+
+    return jsonify({
+        "credits": int(user.get("credits", 0))
+    })
 @app.route("/shopify-webhook", methods=["POST"])
 def shopify_webhook():
     try:
