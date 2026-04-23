@@ -11,12 +11,157 @@ app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 CORS(app)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
+
+# ==================================================
+# HELPERS SUPABASE
+# ==================================================
+
+def sb_headers():
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
+
+def get_user(email):
+    url = f"{SUPABASE_URL}/rest/v1/users_credits?email=eq.{email}&select=*"
+    r = requests.get(url, headers=sb_headers(), timeout=20)
+    data = r.json()
+    return data[0] if data else None
+
+
+def get_credits(email):
+    user = get_user(email)
+    return user["credits"] if user else 0
+
+
+def add_credits(email, amount):
+    user = get_user(email)
+
+    if user:
+        row_id = user["id"]
+        new_total = int(user["credits"]) + int(amount)
+
+        url = f"{SUPABASE_URL}/rest/v1/users_credits?id=eq.{row_id}"
+        requests.patch(
+            url,
+            headers=sb_headers(),
+            json={"credits": new_total},
+            timeout=20
+        )
+    else:
+        url = f"{SUPABASE_URL}/rest/v1/users_credits"
+        requests.post(
+            url,
+            headers=sb_headers(),
+            json={
+                "email": email,
+                "credits": amount
+            },
+            timeout=20
+        )
+
+
+def remove_credit(email):
+    user = get_user(email)
+
+    if not user:
+        return False
+
+    current = int(user["credits"])
+
+    if current <= 0:
+        return False
+
+    row_id = user["id"]
+
+    url = f"{SUPABASE_URL}/rest/v1/users_credits?id=eq.{row_id}"
+    requests.patch(
+        url,
+        headers=sb_headers(),
+        json={"credits": current - 1},
+        timeout=20
+    )
+
+    return True
+
+
+# ==================================================
+# BASIC ROUTE
+# ==================================================
 
 @app.route("/")
 def home():
     return "UNFORGERY AI ONLINE"
 
+
+# ==================================================
+# SHOPIFY WEBHOOK (AJOUT CREDITS APRES PAIEMENT)
+# ==================================================
+
+@app.route("/shopify-webhook", methods=["POST"])
+def shopify_webhook():
+    try:
+        data = request.json
+        email = data.get("email", "").strip().lower()
+
+        if not email:
+            return jsonify({"status": "no email"}), 400
+
+        total = 0
+
+        for item in data.get("line_items", []):
+            title = item.get("title", "").lower()
+            qty = int(item.get("quantity", 1))
+
+            if "express authentication scan" in title:
+                total += 1 * qty
+
+            elif "pack 5 authentication scans" in title:
+                total += 5 * qty
+
+            elif "premium authentication scan" in title:
+                total += 20 * qty
+
+        if total > 0:
+            add_credits(email, total)
+
+        return jsonify({
+            "status": "success",
+            "email": email,
+            "credits_added": total
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ==================================================
+# GET CREDITS
+# ==================================================
+
+@app.route("/get-credits", methods=["POST"])
+def get_user_credits():
+    try:
+        data = request.json
+        email = data.get("email", "").strip().lower()
+
+        return jsonify({
+            "email": email,
+            "credits": get_credits(email)
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ==================================================
+# MAIN SCAN ROUTE (PROMPT INTACT)
+# ==================================================
 
 @app.route("/analyze-upload", methods=["POST"])
 def analyze_upload():
@@ -24,6 +169,15 @@ def analyze_upload():
         # Vérifie clé API
         if not OPENAI_API_KEY:
             return jsonify({"result": "OPENAI_API_KEY missing"}), 500
+
+        email = request.form.get("email", "").strip().lower()
+
+        if not email:
+            return jsonify({"result": "Email required"}), 400
+
+        # Vérifie crédits
+        if get_credits(email) <= 0:
+            return jsonify({"result": "No credits remaining"}), 403
 
         brand = request.form.get("brand", "").strip()
         if not brand:
@@ -271,6 +425,9 @@ RETURN ONLY VALID JSON
         if match:
             answer = match.group(0)
 
+        # Retire 1 crédit seulement si scan OK
+        remove_credit(email)
+
         # JSON clean
         try:
             parsed = json.loads(answer)
@@ -284,6 +441,10 @@ RETURN ONLY VALID JSON
     except Exception as e:
         return jsonify({"result": f"Server error: {str(e)}"}), 500
 
+
+# ==================================================
+# RUN
+# ==================================================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
