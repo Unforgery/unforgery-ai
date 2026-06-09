@@ -534,6 +534,12 @@ def test_user():
     return jsonify({
         "user": user
     })
+@app.route("/debug-openai")
+def debug_openai():
+    return jsonify({
+        "OPENAI_EXISTS": bool(OPENAI_API_KEY),
+        "OPENAI_START": str(OPENAI_API_KEY)[:15] if OPENAI_API_KEY else "missing"
+    })  
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
