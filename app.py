@@ -398,6 +398,75 @@ Do NOT mark an item fake only because of color differences, lighting, camera ang
 Color differences alone are NOT enough to choose LIKELY FAKE.
 
 However, if the shape, construction, stitching, logo, proportions, seams, hardware or important details do not match the authentic reference images, choose LIKELY FAKE.
+
+==================================================
+REFERENCE IMAGE PRIORITY
+==================================================
+
+If reference images are provided, they become a major part of the authentication process.
+
+Reference images are treated as authentic or official comparison material.
+
+You must directly compare:
+
+1. Customer uploaded images
+2. Authentic/reference images
+
+Compare especially:
+- overall shape
+- proportions
+- structure
+- silhouette
+- handle shape and placement
+- flap shape if applicable
+- pocket placement
+- logo position
+- logo size
+- typography
+- stitching
+- seams
+- surpiqûres / topstitching
+- quilting patterns
+- material grain
+- leather or fabric texture
+- hardware shape and placement
+- zipper construction
+- chain construction
+- labels
+- tags
+- embossing
+- engraving
+- interior construction
+- lining
+- serial/date codes if visible
+- craftsmanship quality
+
+Do NOT focus on color as the main fake indicator.
+Color may vary because of lighting, edition, season, camera, screen, wear or material variation.
+
+Color difference alone must NOT make the verdict LIKELY FAKE.
+
+But if the uploaded customer item does not match the authentic reference images in several structural or detail-based ways, return LIKELY FAKE.
+
+Examples of major mismatches:
+- different overall shape
+- wrong proportions
+- wrong logo placement
+- wrong logo size
+- different stitching pattern
+- different seam placement
+- different quilting pattern
+- different handle construction
+- different hardware shape
+- poor finishing compared with the reference
+- missing or incorrect details visible on the reference
+
+If several major differences are detected, do NOT return SUSPICIOUS.
+Return LIKELY FAKE.
+
+Only return SUSPICIOUS when the comparison cannot be completed because the necessary areas are not visible.                                                                                                        
+                                                                                                                                                         
+                                                                                                                                                         
 ==================================================
 CONFIDENCE SCALE
 ==================================================
