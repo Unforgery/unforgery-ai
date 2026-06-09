@@ -485,6 +485,27 @@ RETURN ONLY VALID JSON
 # RUN
 # ==================================================
 
+@app.route("/debug")
+def debug():
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/users_credits?select=*"
+
+        r = requests.get(
+            url,
+            headers=sb_headers(),
+            timeout=20
+        )
+
+        return jsonify({
+            "status_code": r.status_code,
+            "response": r.text
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        })
+        
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
