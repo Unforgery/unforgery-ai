@@ -527,6 +527,13 @@ def test_supabase():
         "status": r.status_code,
         "text": r.text
     })        
+@app.route("/test-user")
+def test_user():
+    user = get_user("test@test.com")
+
+    return jsonify({
+        "user": user
+    })
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
