@@ -481,13 +481,13 @@ CONFIDENCE SCALE
 RETURN ONLY VALID JSON
 ==================================================
 
-{
+{{
   "brand":"{brand}",
   "image_type":"real_user_photo",
   "decision":"SUSPICIOUS",
   "confidence":60,
   "details":"Explain visible authentic signs, visible red flags, important missing views, comparison with reference images if provided, and why the final verdict was selected. If the item differs structurally from the authentic reference images, explain the mismatches and choose LIKELY FAKE."
-}
+}}
 """
 
         content = [{"type": "text", "text": prompt}]
