@@ -249,6 +249,10 @@ MISSION
 
 Analyze all uploaded images and provide the most reliable verdict possible.
 
+If a reference image is provided, treat it as an optional authentic/reference product image.
+Compare the customer's uploaded images against this reference image.
+Do not require a reference image. If no reference image is provided, continue the analysis normally.
+
 Final decisions:
 - LIKELY AUTHENTIC
 - SUSPICIOUS
@@ -413,6 +417,23 @@ RETURN ONLY VALID JSON
         content = [{"type": "text", "text": prompt}]
 
         for file in files[:10]:
+        if reference_file:
+    try:
+        img = reference_file.read()
+        if img:
+            encoded = base64.b64encode(img).decode("utf-8")
+            content.append({
+                "type": "text",
+                "text": "REFERENCE IMAGE: optional authentic/reference product photo for comparison."
+            })
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{encoded}"
+                }
+            })
+    except Exception:
+        pass
             try:
                 img = file.read()
 
