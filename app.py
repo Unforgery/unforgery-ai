@@ -414,9 +414,7 @@ RETURN ONLY VALID JSON
 }}
 """
 
-                content = [{"type": "text", "text": prompt}]
-
-                content = [{"type": "text", "text": prompt}]
+        content = [{"type": "text", "text": prompt}]
 
         for file in files[:10]:
             try:
