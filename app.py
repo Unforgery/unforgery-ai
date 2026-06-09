@@ -519,9 +519,16 @@ RETURN ONLY VALID JSON
                     encoded = base64.b64encode(img).decode("utf-8")
 
                     content.append({
-                        "type": "text",
-                        "text": "REFERENCE IMAGE: optional authentic/reference product photo for comparison."
-                    })
+    "type": "text",
+    "text": """
+AUTHENTIC REFERENCE IMAGES BEGIN HERE.
+
+The following images are known authentic reference images.
+Compare the customer's product directly against these references.
+
+Major visual discrepancies should strongly increase the probability of counterfeit.
+"""
+})
 
                     content.append({
                         "type": "image_url",
