@@ -416,24 +416,46 @@ RETURN ONLY VALID JSON
 
         content = [{"type": "text", "text": prompt}]
 
-        for file in files[:10]:
+                for file in files[:10]:
+            try:
+                img = file.read()
+
+                if not img:
+                    continue
+
+                encoded = base64.b64encode(img).decode("utf-8")
+
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{encoded}"
+                    }
+                })
+
+            except Exception:
+                continue
+
         if reference_file:
-    try:
-        img = reference_file.read()
-        if img:
-            encoded = base64.b64encode(img).decode("utf-8")
-            content.append({
-                "type": "text",
-                "text": "REFERENCE IMAGE: optional authentic/reference product photo for comparison."
-            })
-            content.append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/jpeg;base64,{encoded}"
-                }
-            })
-    except Exception:
-        pass
+            try:
+                img = reference_file.read()
+
+                if img:
+                    encoded = base64.b64encode(img).decode("utf-8")
+
+                    content.append({
+                        "type": "text",
+                        "text": "REFERENCE IMAGE: optional authentic/reference product photo for comparison."
+                    })
+
+                    content.append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{encoded}"
+                        }
+                    })
+
+            except Exception:
+                pass
             try:
                 img = file.read()
 
