@@ -505,7 +505,7 @@ def debug():
         return jsonify({
             "error": str(e)
         })
-        @app.route("/debug2")
+@app.route("/debug2")
 def debug2():
     return jsonify({
         "SUPABASE_URL": SUPABASE_URL,
