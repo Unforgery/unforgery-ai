@@ -414,9 +414,9 @@ RETURN ONLY VALID JSON
 }}
 """
 
-        content = [{"type": "text", "text": prompt}]
+                content = [{"type": "text", "text": prompt}]
 
-                for file in files[:10]:
+        for file in files[:10]:
             try:
                 img = file.read()
 
@@ -456,23 +456,6 @@ RETURN ONLY VALID JSON
 
             except Exception:
                 pass
-            try:
-                img = file.read()
-
-                if not img:
-                    continue
-
-                encoded = base64.b64encode(img).decode("utf-8")
-
-                content.append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{encoded}"
-                    }
-                })
-
-            except Exception:
-                continue
 
         if len(content) == 1:
             return jsonify({"result": "Invalid images"}), 400
