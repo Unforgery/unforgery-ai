@@ -231,6 +231,7 @@ def analyze_upload():
             brand = "general product"
 
         files = request.files.getlist("files")
+        reference_file = request.files.get("reference")
 
         if not files or len(files) == 0:
             return jsonify({"result": "No images received"}), 400
