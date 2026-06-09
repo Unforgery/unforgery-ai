@@ -505,6 +505,13 @@ def debug():
         return jsonify({
             "error": str(e)
         })
+        @app.route("/debug2")
+def debug2():
+    return jsonify({
+        "SUPABASE_URL": SUPABASE_URL,
+        "HAS_KEY": bool(SUPABASE_KEY),
+        "KEY_START": str(SUPABASE_KEY)[:20]
+    })
         
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
