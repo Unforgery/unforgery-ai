@@ -540,6 +540,12 @@ def debug_openai():
         "OPENAI_EXISTS": bool(OPENAI_API_KEY),
         "OPENAI_START": str(OPENAI_API_KEY)[:15] if OPENAI_API_KEY else "missing"
     })  
+@app.route("/test-analyze")
+def test_analyze():
+
+    return jsonify({
+        "status": "analyze route loaded"
+    })
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
