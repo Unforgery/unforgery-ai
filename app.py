@@ -512,7 +512,21 @@ def debug2():
         "HAS_KEY": bool(SUPABASE_KEY),
         "KEY_START": str(SUPABASE_KEY)[:20]
     })
-        
+@app.route("/test-supabase")
+def test_supabase():
+
+    url = f"{SUPABASE_URL}/rest/v1/users_credits?select=*"
+
+    r = requests.get(
+        url,
+        headers=sb_headers(),
+        timeout=20
+    )
+
+    return jsonify({
+        "status": r.status_code,
+        "text": r.text
+    })        
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
