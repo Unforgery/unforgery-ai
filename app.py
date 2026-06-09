@@ -361,7 +361,7 @@ Check:
 ==================================================
 STRICT DECISION RULES
 ==================================================
-
+    
 You must be conservative.
 
 Never choose LIKELY AUTHENTIC unless there is strong visible evidence across multiple images.
@@ -393,6 +393,15 @@ Choose LIKELY FAKE when:
 Important:
 A product looking similar to the brand is NOT enough to call it authentic.
 If you cannot verify authenticity strongly, return SUSPICIOUS.
+
+Choose LIKELY FAKE when:
+
+- multiple visible counterfeit indicators exist
+- the uploaded item differs significantly from the provided authentic reference images
+- shape, logo, stitching, hardware, dimensions or construction do not match the authentic reference product
+- several inconsistencies exist across the comparison
+
+
 ==================================================
 IMPORTANT RULES
 ==================================================
